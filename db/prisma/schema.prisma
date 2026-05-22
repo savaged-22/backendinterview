@@ -60,3 +60,18 @@ model DetectionEvent {
   post       Post     @relation(fields: [postId], references: [id])
   detectedAt DateTime @default(now())
 }
+
+model Keyword {
+  id        String   @id @default(cuid())
+  keyword   String   @unique
+  createdAt DateTime @default(now())
+}
+
+model ScrapingLog {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  status    String
+  message   String?
+}
+
+

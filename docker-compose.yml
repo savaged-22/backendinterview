@@ -24,7 +24,8 @@ services:
       dockerfile: gateway-service/Dockerfile
     container_name: gateway-service
     environment:
-      - DATABASE_URL=postgresql://postgres:password123@postgres-db:5432/hackernews?schema=public
+      - WORKER_SERVICE_URL=http://worker-service:8001
+      - WORKER_TIMEOUT_SECONDS=10.0
     ports:
       - "8000:8000"
     depends_on:
@@ -38,6 +39,8 @@ services:
     container_name: worker-service
     environment:
       - DATABASE_URL=postgresql://postgres:password123@postgres-db:5432/hackernews?schema=public
+    ports:
+      - "8001:8001"
     depends_on:
       postgres-db:
         condition: service_healthy
