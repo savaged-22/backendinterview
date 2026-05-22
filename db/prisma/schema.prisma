@@ -1,0 +1,62 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-py"
+}
+
+model Author {
+  id        String   @id @default(cuid())
+  username  String   @unique
+
+  posts     Post[]
+
+  createdAt DateTime @default(now())
+}
+
+model Source {
+  id        String   @id @default(cuid())
+
+  name      String
+  baseUrl   String?
+
+  posts     Post[]
+
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id              String   @id @default(cuid())
+
+  externalId      String?  @unique
+  title           String
+  url             String   @unique
+
+  points          Int      @default(0)
+
+  detectedAt      DateTime @default(now())
+  publishedAt     DateTime?
+
+  authorId        String
+  sourceId        String
+
+  author          Author   @relation(fields: [authorId], references: [id])
+  source          Source   @relation(fields: [sourceId], references: [id])
+
+  detections      DetectionEvent[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([title])
+  @@index([detectedAt])
+}
+
+model DetectionEvent {
+  id         String   @id @default(cuid())
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id])
+  detectedAt DateTime @default(now())
+}

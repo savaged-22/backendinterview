@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: hackernews
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hackernews"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    container_name: gateway-service
+    environment:
+      - DATABASE_URL=postgresql://postgres:password123@postgres-db:5432/hackernews?schema=public
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    container_name: worker-service
+    environment:
+      - DATABASE_URL=postgresql://postgres:password123@postgres-db:5432/hackernews?schema=public
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  hackernewsfront:
+    build:
+      context: ../hackernewsfront
+      dockerfile: Dockerfile.dev
+    container_name: hackernewsfront
+    stdin_open: true
+    tty: true
+    ports:
+      - "3000:3000"
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - gateway-service
+
+volumes:
+  postgres_data:
+
